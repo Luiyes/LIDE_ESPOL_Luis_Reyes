@@ -37,7 +37,6 @@ library(ggplot2)
 # file path containing the datasets
 ##fp <- file.path(td, list.files(path = td))
 ##fp
-
 ##library(foreign)
 # spss
 ##data <- read.spss(fp)
