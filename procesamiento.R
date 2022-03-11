@@ -38,7 +38,7 @@ library(ggplot2)
 ##fp <- file.path(td, list.files(path = td))
 ##fp
 
-library(foreign)
+##library(foreign)
 # spss
 ##data <- read.spss(fp)
 # convertir la lista en dataframe
