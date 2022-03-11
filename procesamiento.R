@@ -57,6 +57,7 @@ Ingreso_medio2018<- data5 %>%
 Ingreso_medio2018
 ggplot(Ingreso_medio2018, aes(x=p66_dic18,y=p45_dic18))+
   geom_point()
+
 #Modelo de regresion lineal simple
 modelo <- lm(p66_dic18 ~ p45_dic18, data=data5,na.action = na.exclude)
 summary(modelo)
