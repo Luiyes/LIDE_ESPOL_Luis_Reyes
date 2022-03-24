@@ -18,8 +18,31 @@ library(QuantPsyc)
 library(ggplot2)
 
 #Carga de data 2021
-Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
-Enemdu2021p_c <- haven::as_factor(Enemdu2021p)
+id<-"1ZT01QkrRp3RbuuaRG-ZIXA7Yxgodw-w3"
+url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+
+
+# creates a tempory directory
+td <- tempdir()
+
+# creates a placeholder file
+tf <- tempfile(tmpdir = td, fileext = ".zip")
+
+# downloads the data into the placeholder file - warning mode = "wb" for windowns
+download.file(url = url, destfile = tf, mode = "wb")
+
+# extracts the files into the tempory directory
+unzip(tf, exdir = td, overwrite = T)
+
+# file path containing the datasets
+fp <- file.path(td, list.files(path = td)[2])
+
+# to verify that the file was downloaded, use: list.files(path = td)
+
+# spss
+library(foreign)
+Enemdu2021p <- read.spss(fp) 
+Enemdu2021p <- as.data.frame(Enemdu2021p)
 
 #Revision de variables a tratar
 
