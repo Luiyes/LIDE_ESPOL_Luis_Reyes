@@ -1,0 +1,75 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+author:"Luis Reyes y George Jaramillo" date:"`r Sys.Date()`"
+---
+```{r data, include=FALSE}
+
+library(haven)
+library(tidyverse)
+library(readr)
+library(readxl)
+options(digits=2)
+#Carga de data 2021(local)
+Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
+
+###################################
+
+#Carga de data automatizada 2021
+#id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
+#url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+
+# creates a temporary directory
+#td <- tempdir()
+# creates a placeholder file
+#tf <- tempfile(tmpdir = td, fileext = ".zip")
+# downloads the data into the placeholder file
+#download.file(url = url, destfile = tf)
+# extracts the files into the temporary directory
+#unzip(tf, exdir = td, overwrite = TRUE)
+# file path containing the datasets
+#fp <- file.path(td, list.files(path = td)[1])
+
+#library(foreign)
+# spss
+#data <- read.spss(fp)
+#Enemdu2021p <- as.data.frame(data)
+
+###################################
+
+#Cantidad de personas con estudios de 4to nivel y un empleo pleno
+cuarto_niv_empleo <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% count(p10a)
+#variable usada en articulo
+varcuarto_niv_empleo <- cuarto_niv_empleo$n
+
+#Cantidad de personas con estudios de 3er nivel y un empleo pleno
+tercer_niv_empleo <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% count(p10a)
+#variable usada en articulo
+vartercer_niv_empleo <- tercer_niv_empleo$n
+
+#Procesamiento de data
+
+#Se elimina valores atipicos en ingresos y se crea una nueva columna
+Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999) 
+                               | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
+
+#Promedio de ingresos de personas entre (25-35) con estudios de 4to nivel y un empleo pleno
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+#variable usada en articulo
+varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
+
+#Promedio de ingresos de personas entre (25-35) con estudios de 3er nivel y un empleo pleno
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+#variable usada en articulo
+varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
+
+
+primer_val <- ifelse(varingreso_prom_cuarto>varingreso_prom_tercer, "de estudio", "de experiencia")
+segun_val <- ifelse(varingreso_prom_cuarto>varingreso_prom_tercer, "experiencia", "conocimientos")
+```
+# Después de la Universidad, ¿Seguir estudiando o adquirir experiencia?
+### El salario en Ecuador ha sido cuestionado durante años, sobre todo por los mas jóvenes, quienes al momento de culminar una carrera universitaria se encuentran indecisos al tomar la decision de adquirir experiencia laboral o mantenerse estudiando despues de obtener un título de grado. La cuestión es, ¿Qué perfil es mas buscado por el empleador?. Es muy común observar ofertas laborales que requieren personal de 25 a 35 años con un alto nivel de estudio con experiencia minima de 3 a 5 años o más.Lo cual se complica para los jovenes quienes no pueden adquirir un empleo dado que no tienen experiencia por dedicarse a estudiar o a su vez no han podido adquirir un nivel mas de estudio por encontrar un trabajo fuera de su especialización para subsitir.
+### Pues bien, según la encuesta realizada por el Instituto Nacional de Estadisticas y Censo (INEC) en el último trimestre del 2021, existe un total de `r varcuarto_niv_empleo` de personas que tienen un estudio de 4to nivel y cuentan con empleo pleno mientras que, `r vartercer_niv_empleo` personas culminaron la carrera universitaria y se dedicaron a trabajar. 
+### Sin embargo, la conyontura se da en quienes obtienen un mejor salario.Dentro de un rango de edad de 25 a 35 años, las personas que cuentan con estudios superiores a una licenciatura (maestría o PhD) cuentan con un ingreso salarial aproximadamente de $`r varingreso_prom_cuarto` y por otro lado, quienes se dedicaron a adquierir experiencia laboral demuestran remuneraciones de $`r varingreso_prom_tercer` en promedio.Esto explicaría que las empresas tienen una mayor valoracion en lo que respecta a los años `r primer_val` mientras que el tiempo invertido en adquirir `r segun_val` parece 
