@@ -17,7 +17,7 @@ library(boot)
 library(QuantPsyc)
 library(ggplot2)
 
-#Carga de data 2021
+#Carga de data 2021.
 id<-"1ZT01QkrRp3RbuuaRG-ZIXA7Yxgodw-w3"
 url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
 
