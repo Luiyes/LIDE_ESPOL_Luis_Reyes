@@ -1,41 +1,48 @@
 ---
 output:
+  word_document: default
   html_document: default
   pdf_document: default
 ---
 author:"Luis Reyes y George Jaramillo" date:"`r Sys.Date()`"
 ---
 ```{r data, include=FALSE}
-
+if(!require(readstata13)) install.packages("readstata13", repos = "http://cran.us.r-project.org")
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(scales)) install.packages("scales", repos = "http://cran.us.r-project.org")
+if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
+if(!require(car)) install.packages("car", repos = "http://cran.us.r-project.org")
+if(!require(boot)) install.packages("boot", repos = "http://cran.us.r-project.org")
+if(!require(QuantPsyc)) install.packages("QuantPsyc", repos = "http://cran.us.r-project.org")
+if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 library(haven)
 library(tidyverse)
 library(readr)
 library(readxl)
 options(digits=2)
 #Carga de data 2021(local)
-Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
 
 ###################################
 
 #Carga de data automatizada 2021
-#id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
-#url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
+url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
 
 # creates a temporary directory
-#td <- tempdir()
+td <- tempdir()
 # creates a placeholder file
-#tf <- tempfile(tmpdir = td, fileext = ".zip")
+tf <- tempfile(tmpdir = td, fileext = ".zip")
 # downloads the data into the placeholder file
-#download.file(url = url, destfile = tf)
+download.file(url = url, destfile = tf,mode="wb")
 # extracts the files into the temporary directory
-#unzip(tf, exdir = td, overwrite = TRUE)
+unzip(tf, exdir = td, overwrite = TRUE)
 # file path containing the datasets
-#fp <- file.path(td, list.files(path = td)[1])
+fp <- file.path(td, list.files(path = td)[2])
 
-#library(foreign)
-# spss
-#data <- read.spss(fp)
-#Enemdu2021p <- as.data.frame(data)
+library(foreign)
+enemdu_p <- read.spss(fp) 
+enemdu_p <- as.data.frame(enemdu_p)
+
 
 ###################################
 
@@ -57,7 +64,7 @@ Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999)
 
 #Promedio de ingresos de personas entre (25-35) con estudios de 4to nivel y un empleo pleno
 ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 25,35))
-#variable usada en articulo
+#variable usada en articulo.
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
 #Promedio de ingresos de personas entre (25-35) con estudios de 3er nivel y un empleo pleno
