@@ -17,6 +17,7 @@ library(boot)
 library(QuantPsyc)
 library(ggplot2)
 
+#<<<<<<< HEAD
 #Carga de data 2021.
 id<-"1ZT01QkrRp3RbuuaRG-ZIXA7Yxgodw-w3"
 url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
@@ -43,6 +44,30 @@ fp <- file.path(td, list.files(path = td)[2])
 library(foreign)
 Enemdu2021p <- read.spss(fp) 
 Enemdu2021p <- as.data.frame(Enemdu2021p)
+
+#Carga de data 2021
+#Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
+#Enemdu2021p_c <- haven::as_factor(Enemdu2021p)
+#Carga de data automatizada 2021
+#id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
+#url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+
+# creates a temporary directory
+#td <- tempdir()
+# creates a placeholder file
+#tf <- tempfile(tmpdir = td, fileext = ".zip")
+# downloads the data into the placeholder file
+#download.file(url = url, destfile = tf)
+# extracts the files into the temporary directory
+#unzip(tf, exdir = td, overwrite = TRUE)
+# file path containing the datasets
+#fp <- file.path(td, list.files(path = td)[1])
+
+#library(foreign)
+# spss
+#data <- read.spss(fp)
+#Enemdu2021p <- as.data.frame(data)
+#>>>>>>> d9f75eb83529cbb8476e7649a1a9c0d356e94748
 
 #Revision de variables a tratar
 
@@ -167,6 +192,8 @@ ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=p45))+
 #############################################
 
 #Carga de data de 2019
+
+
 Enemdu2019p <- read.csv("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\educacion\\Base_Match_dic18_dic19.csv",sep=";")
 
 Enemdu2019p$ingrl_clean <- ifelse(Enemdu2019p$ingrl_dic19 %in% c(999999) 
