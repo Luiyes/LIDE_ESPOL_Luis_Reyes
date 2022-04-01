@@ -49,10 +49,11 @@ varcuarto_niv_empleo <- cuarto_niv_empleo$n
 
 #Cantidad de personas con estudios de 3er nivel y un empleo pleno
 tercer_niv_empleo <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% count(p10a)
-#variable usada en articulo
+#variable usada en articulo   
 vartercer_niv_empleo <- tercer_niv_empleo$n
 
 agrp <- Enemdu2021p %>% count(p10a)
+agrp2 <- Enemdu2021p_c %>% count(p10a)
 
 ing <- Enemdu2021p  %>% count(ingrl)
 
@@ -63,27 +64,42 @@ conda <- Enemdu2021p  %>% count(condact)
 ocup <- Enemdu2021p  %>% count(p42)
 #Procesamiento de data
 
+
 #Se elimina valores atipicos en ingresos y se crea una nueva columna
 Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999) 
                                | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
 
+
+#Se crea nueva columna para los años de educacion
+#Enemdu2021p$años_edu <- if(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3){1} else {if(Enemdu2021p$p10a==4){7} else {if(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7){13} else{ if(Enemdu2021p$p10a==5){10} else {if(Enemdu2021p$p10a==8){16} else {if(Enemdu2021p$p10a==9){17} else {if(Enemdu2021p$p10a==10){19} else {0}}}}}}}
+Enemdu2021p$años_edu <- ifelse(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3,1 , ifelse(Enemdu2021p$p10a==4,7, ifelse(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7,13, ifelse(Enemdu2021p$p10a==5,10,ifelse(Enemdu2021p$p10a==8,16,ifelse(Enemdu2021p$p10a==9,17,ifelse(Enemdu2021p$p10a==10,19,0)))))))
+
+Enemdu2021p %>% count(años_edu)
+
+Enemdu2021p %>% filter(is.na(años_edu))
 #Promedio de ingresos de personas entre (25-35) con estudios de 4to nivel y un empleo pleno
-ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 30,35))
 #variable usada en articulo
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
 #Promedio de ingresos de personas entre (25-35) con estudios de 3er nivel y un empleo pleno
-ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% filter(between(p03, 30,35))
 #variable usada en articulo
 varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 
 
 #Modelo de regresion lineal simple 1
 #Relacion entre ingresos y educacion
-modelo1 <- lm(ingrl_clean ~ p10a, data=Enemdu2021p ,na.action = na.exclude)
+modelo1 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo1)
 
 ggplot(Enemdu2021p, aes(x=ingrl_clean,y=p10a))+
+  geom_point()
+
+modelo20 <- lm(ingrl_clean ~ años_edu, data=Enemdu2021p ,na.action = na.exclude)
+summary(modelo20)
+
+ggplot(Enemdu2021p, aes(x=ingrl_clean,y=años_edu))+
   geom_point()
 
 #Modelo de regresion lineal simple 2
@@ -105,7 +121,7 @@ Enemdu_ingr_no_out <- Enemdu_zscore %>%
 
 #Modelo de regresion lineal simple 3
 #Relacion entre ingresos y educacion
-modelo3 <- lm(ingrl_clean ~ p10a, data=Enemdu_ingr_no_out ,na.action = na.exclude)
+modelo3 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu_ingr_no_out ,na.action = na.exclude)
 summary(modelo3)
 
 ggplot(Enemdu_ingr_no_out, aes(x=ingrl_clean,y=p10a))+
@@ -118,7 +134,7 @@ summary(modelo4)
 ggplot(Enemdu_ingr_no_out, aes(x=ingrl_clean,y=p45))+
   geom_point()
 
-Enemdu2021p %>% filter(p02 == 1) %>% filter(between(p03, 25,35)) %>% 
+Enemdu2021p %>% filter(p02 == 1) %>% filter(between(p03, 30,35)) %>% 
   group_by(condact) %>% summarize(n = n()) %>% mutate(prob = prop.table(n))
 
 #Se filtran a las Personas con empleo adecuado
@@ -128,7 +144,7 @@ Enemdu_empleo2021 <- Enemdu_ingr_no_out %>% filter(condact == 1)
 
 #Modelo de regresion lineal simple 5
 #Relacion entre ingresos y educacion
-modelo5 <- lm(ingrl_clean ~ p10a, data=Enemdu_empleo2021 ,na.action = na.exclude)
+modelo5 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu_empleo2021 ,na.action = na.exclude)
 summary(modelo5)
 
 ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=p10a))+
@@ -143,11 +159,11 @@ ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=p45))+
 
 
 #Personas con empleo adecuado y edad para trabajar
-Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 25,35))
+Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 30,35))
 
 #Modelo de regresion lineal simple 7
 #Relacion entre ingresos y educacion
-modelo7 <- lm(ingrl_clean ~ p10a, data=Enemdu_emp_edad ,na.action = na.exclude)
+modelo7 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo7)
 
 ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=p10a))+
@@ -159,6 +175,15 @@ modelo8 <- lm(ingrl_clean ~ p45, data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo8)
 ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=p45))+
   geom_point()
+
+sex <- Enemdu_emp_edad  %>% count(p02)
+
+modelo21 <- lm(ingrl_clean ~ años_edu, data=Enemdu_emp_edad ,na.action = na.exclude)
+summary(modelo21)
+
+ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=años_edu))+
+  geom_point()
+
 #############################################  -
 #############################################
 

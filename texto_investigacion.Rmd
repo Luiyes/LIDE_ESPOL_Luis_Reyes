@@ -18,24 +18,24 @@ Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina 
 ###################################
 
 #Carga de data automatizada 2021
-#id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
-#url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
+url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
 
 # creates a temporary directory
-#td <- tempdir()
+td <- tempdir()
 # creates a placeholder file
-#tf <- tempfile(tmpdir = td, fileext = ".zip")
+tf <- tempfile(tmpdir = td, fileext = ".zip")
 # downloads the data into the placeholder file
-#download.file(url = url, destfile = tf)
+download.file(url = url, destfile = tf)
 # extracts the files into the temporary directory
-#unzip(tf, exdir = td, overwrite = TRUE)
+unzip(tf, exdir = td, overwrite = TRUE)
 # file path containing the datasets
-#fp <- file.path(td, list.files(path = td)[1])
+fp <- file.path(td, list.files(path = td)[1])
 
 #library(foreign)
 # spss
-#data <- read.spss(fp)
-#Enemdu2021p <- as.data.frame(data)
+data <- read.spss(fp)
+Enemdu2021p <- as.data.frame(data)
 
 ###################################
 
