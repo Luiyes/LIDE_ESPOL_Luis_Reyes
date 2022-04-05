@@ -98,34 +98,36 @@ c_sex <- Enemdu2021p  %>% count(p02)
 
 
 #Se elimina valores atipicos en ingresos y se crea una nueva columna
-Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999) 
-                                  | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
+Enemdu2021p$ingrl_clean <- ifelse(as.numeric(Enemdu2021p$ingrl) > 5000
+                                  | is.na(Enemdu2021p$ingrl)|Enemdu2021p$ingrl=="No informa", NA, Enemdu2021p$ingrl)
 
 
 #Se crea nueva columna para los años de educacion
 #Enemdu2021p$años_edu <- if(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3){1} else {if(Enemdu2021p$p10a==4){7} else {if(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7){13} else{ if(Enemdu2021p$p10a==5){10} else {if(Enemdu2021p$p10a==8){16} else {if(Enemdu2021p$p10a==9){17} else {if(Enemdu2021p$p10a==10){19} else {0}}}}}}}
 Enemdu2021p$años_edu <- ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,0,3),2*Enemdu2021p$p10b , ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,4,10),3+Enemdu2021p$p10b, ifelse(Enemdu2021p$p10a=="Jardín de Infantes",1, ifelse(Enemdu2021p$p10a=="Primaria",1+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación Básica",Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Secundaria",7+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación  Media",10+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior no Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Post-grado",18+Enemdu2021p$p10b,0))))))))))
-
+Enemdu2021p$años_edu
 Enemdu2021p %>% count(años_edu)
 Enemdu2021p %>% filter(p10a=="Post-grado") %>%count(p10b)
  
 Enemdu2021p %>% filter(is.na(años_edu))
+
 #Promedio de ingresos de personas entre (30-35) con estudios de 4to nivel y un empleo pleno
-ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(p03, 30,35))
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 30,35))
 #variable usada en articulo
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
 #Promedio de ingresos de personas entre (30-35) con estudios de 3er nivel y un empleo pleno
-ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(p03, 30,35))
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 30,35))
 #variable usada en articulo
 varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 
 
 #Modelo de regresion lineal simple 1
 #Relacion entre ingresos y educacion
-modelo1 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu2021p ,na.action = na.exclude)
+modelo1 <- lm(ingrl_clean ~ p10a, data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo1)
 
+view(Enemdu2021p$p10a)
 ggplot(Enemdu2021p, aes(x=p10a))+
   geom_bar()
 
@@ -136,7 +138,7 @@ ggplot(Enemdu2021p, aes(x=ingrl_clean,y=años_edu))+
   geom_point()
 
 #Modelo de regresion lineal simple 2
-#Relacion entre ingresos y experiencia laboral
+#Relacion entre ingresos y experiencia laboral 
 modelo2 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo2)
 
