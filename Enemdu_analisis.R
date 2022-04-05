@@ -17,43 +17,65 @@ library(boot)
 library(QuantPsyc)
 library(ggplot2)
 
-#Carga de data 2021
-Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
-Enemdu2021p_c <- haven::as_factor(Enemdu2021p)
-#Carga de data automatizada 2021
-#id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
-#url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
+#<<<<<<< HEAD
+#Carga de data 2021.
+id<-"1ZT01QkrRp3RbuuaRG-ZIXA7Yxgodw-w3"
+url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
 
-# creates a temporary directory
-#td <- tempdir()
+
+# creates a tempory directory
+td <- tempdir()
+
 # creates a placeholder file
-#tf <- tempfile(tmpdir = td, fileext = ".zip")
-# downloads the data into the placeholder file
-#download.file(url = url, destfile = tf)
-# extracts the files into the temporary directory
-#unzip(tf, exdir = td, overwrite = TRUE)
-# file path containing the datasets
-#fp <- file.path(td, list.files(path = td)[1])
+tf <- tempfile(tmpdir = td, fileext = ".zip")
 
-#library(foreign)
+# downloads the data into the placeholder file - warning mode = "wb" for windowns
+download.file(url = url, destfile = tf, mode = "wb")
+
+# extracts the files into the tempory directory
+unzip(tf, exdir = td, overwrite = T)
+
+# file path containing the datasets
+fp <- file.path(td, list.files(path = td)[3])
+
+# to verify that the file was downloaded, use: list.files(path = td)
+
 # spss
-#data <- read.spss(fp)
-#Enemdu2021p <- as.data.frame(data)
+library(foreign)
+Enemdu2021p <- read.spss(fp) 
+Enemdu2021p <- as.data.frame(Enemdu2021p)
+
+#Carga de data 2021
+#Enemdu2021p <- as.data.frame(read.spss("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
+agrp22 <- Enemdu2021p %>% count(p10a)
+Enemdu2021p %>% count(prov)
+Enemdu2021p %>% count(dominio)
+
+
+#Enemdu2021p_c <- haven::as_factor(Enemdu2021p)
 
 #Revision de variables a tratar
-
+cond <- Enemdu2021p %>% count(condact)
 #Cantidad de personas con estudios de 4to nivel y un empleo pleno
-cuarto_niv_empleo <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% count(p10a)
+cuarto_niv_empleo <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% count(p10a)
+
+den <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% count(p10a)
+
 #variable usada en articulo
-varcuarto_niv_empleo <- cuarto_niv_empleo$n
+var_porc_cuarto_niv_empleo <- ((cuarto_niv_empleo$n)/(den$n))*100
+
+
+
 
 #Cantidad de personas con estudios de 3er nivel y un empleo pleno
-tercer_niv_empleo <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% count(p10a)
+tercer_niv_empleo <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% count(p10a)
+
+den2 <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% count(p10a)
 #variable usada en articulo   
-vartercer_niv_empleo <- tercer_niv_empleo$n
+var_porc_tercer_niv_empleo <- ((tercer_niv_empleo$n)/(den2$n))*100
 
 agrp <- Enemdu2021p %>% count(p10a)
-agrp2 <- Enemdu2021p_c %>% count(p10a)
+agrp2 <- Enemdu2021p %>% count(p10b)
 
 ing <- Enemdu2021p  %>% count(ingrl)
 
@@ -62,28 +84,39 @@ expe <- Enemdu2021p  %>% count(p45)
 conda <- Enemdu2021p  %>% count(condact)
 
 ocup <- Enemdu2021p  %>% count(p42)
+
+razones <- Enemdu2021p  %>% count(p09)
+
+año_aprob <- Enemdu2021p  %>% count(p10b)
+
+ob_tit <- Enemdu2021p  %>% count(p12a)
+
+cod_titu <- Enemdu2021p  %>% count(p12b)
+
+c_sex <- Enemdu2021p  %>% count(p02)
 #Procesamiento de data
 
 
 #Se elimina valores atipicos en ingresos y se crea una nueva columna
 Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999) 
-                               | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
+                                  | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
 
 
 #Se crea nueva columna para los años de educacion
 #Enemdu2021p$años_edu <- if(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3){1} else {if(Enemdu2021p$p10a==4){7} else {if(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7){13} else{ if(Enemdu2021p$p10a==5){10} else {if(Enemdu2021p$p10a==8){16} else {if(Enemdu2021p$p10a==9){17} else {if(Enemdu2021p$p10a==10){19} else {0}}}}}}}
-Enemdu2021p$años_edu <- ifelse(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3,1 , ifelse(Enemdu2021p$p10a==4,7, ifelse(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7,13, ifelse(Enemdu2021p$p10a==5,10,ifelse(Enemdu2021p$p10a==8,16,ifelse(Enemdu2021p$p10a==9,17,ifelse(Enemdu2021p$p10a==10,19,0)))))))
+Enemdu2021p$años_edu <- ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,0,3),2*Enemdu2021p$p10b , ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,4,10),3+Enemdu2021p$p10b, ifelse(Enemdu2021p$p10a=="Jardín de Infantes",1, ifelse(Enemdu2021p$p10a=="Primaria",1+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación Básica",Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Secundaria",7+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación  Media",10+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior no Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Post-grado",18+Enemdu2021p$p10b,0))))))))))
 
 Enemdu2021p %>% count(años_edu)
-
+Enemdu2021p %>% filter(p10a=="Post-grado") %>%count(p10b)
+ 
 Enemdu2021p %>% filter(is.na(años_edu))
-#Promedio de ingresos de personas entre (25-35) con estudios de 4to nivel y un empleo pleno
-ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 30,35))
+#Promedio de ingresos de personas entre (30-35) con estudios de 4to nivel y un empleo pleno
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(p03, 30,35))
 #variable usada en articulo
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
-#Promedio de ingresos de personas entre (25-35) con estudios de 3er nivel y un empleo pleno
-ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% filter(between(p03, 30,35))
+#Promedio de ingresos de personas entre (30-35) con estudios de 3er nivel y un empleo pleno
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(p03, 30,35))
 #variable usada en articulo
 varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 
@@ -93,8 +126,8 @@ varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 modelo1 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo1)
 
-ggplot(Enemdu2021p, aes(x=ingrl_clean,y=p10a))+
-  geom_point()
+ggplot(Enemdu2021p, aes(x=p10a))+
+  geom_bar()
 
 modelo20 <- lm(ingrl_clean ~ años_edu, data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo20)
@@ -104,10 +137,10 @@ ggplot(Enemdu2021p, aes(x=ingrl_clean,y=años_edu))+
 
 #Modelo de regresion lineal simple 2
 #Relacion entre ingresos y experiencia laboral
-modelo2 <- lm(ingrl_clean ~ p45, data=Enemdu2021p ,na.action = na.exclude)
+modelo2 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu2021p ,na.action = na.exclude)
 summary(modelo2)
 
-ggplot(Enemdu2021p, aes(x=ingrl_clean,y=p45))+
+ggplot(Enemdu2021p, aes(x=ingrl_clean,y=as.numeric(p45)))+
   geom_point()
 
 
@@ -124,42 +157,43 @@ Enemdu_ingr_no_out <- Enemdu_zscore %>%
 modelo3 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu_ingr_no_out ,na.action = na.exclude)
 summary(modelo3)
 
-ggplot(Enemdu_ingr_no_out, aes(x=ingrl_clean,y=p10a))+
-  geom_point()
+ggplot(Enemdu_ingr_no_out, aes(x=p10a))+
+  geom_bar()
 
 #Modelo de regresion lineal simple 4
 #Relacion entre ingresos y experiencia laboral
-modelo4 <- lm(ingrl_clean ~ p45, data=Enemdu_ingr_no_out ,na.action = na.exclude)
+modelo4 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu_ingr_no_out ,na.action = na.exclude)
 summary(modelo4)
 ggplot(Enemdu_ingr_no_out, aes(x=ingrl_clean,y=p45))+
   geom_point()
 
-Enemdu2021p %>% filter(p02 == 1) %>% filter(between(p03, 30,35)) %>% 
+Enemdu2021p %>% filter(p02 == "Hombre") %>% filter(between(p03, 30,35)) %>% 
   group_by(condact) %>% summarize(n = n()) %>% mutate(prob = prop.table(n))
-
-#Se filtran a las Personas con empleo adecuado
-
-Enemdu_empleo2021 <- Enemdu_ingr_no_out %>% filter(condact == 1)
-
+Enemdu_empleo2021 <- Enemdu_ingr_no_out %>% filter(condact == "Adecuado")
 
 #Modelo de regresion lineal simple 5
 #Relacion entre ingresos y educacion
 modelo5 <- lm(ingrl_clean ~ as.factor(p10a), data=Enemdu_empleo2021 ,na.action = na.exclude)
 summary(modelo5)
 
-ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=p10a))+
-  geom_point()
+ggplot(Enemdu_empleo2021, aes(x=p10a))+
+  geom_bar()
 
 #Modelo de regresion lineal simple 6
 #Relacion entre ingresos y experiencia laboral
-modelo6 <- lm(ingrl_clean ~ p45, data=Enemdu_empleo2021 ,na.action = na.exclude)
+modelo6 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu_empleo2021 ,na.action = na.exclude)
 summary(modelo6)
-ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=p45))+
+ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=as.numeric(p45)))+
   geom_point()
 
 
 #Personas con empleo adecuado y edad para trabajar
 Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 30,35))
+Enemdu_emp_edad
+
+
+ggplot(Enemdu_emp_edad,aes(x=dominio))+
+  geom_bar()
 
 #Modelo de regresion lineal simple 7
 #Relacion entre ingresos y educacion
@@ -171,9 +205,9 @@ ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=p10a))+
 
 #Modelo de regresion lineal simple 8
 #Relacion entre ingresos y experiencia laboral
-modelo8 <- lm(ingrl_clean ~ p45, data=Enemdu_emp_edad ,na.action = na.exclude)
+modelo8 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo8)
-ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=p45))+
+ggplot(as.data.frame(Enemdu_emp_edad), aes(x=ingrl_clean,y=as.numeric(p45),color=as.factor(p02)))+
   geom_point()
 
 sex <- Enemdu_emp_edad  %>% count(p02)
@@ -181,13 +215,29 @@ sex <- Enemdu_emp_edad  %>% count(p02)
 modelo21 <- lm(ingrl_clean ~ años_edu, data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo21)
 
-ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=años_edu))+
+ggplot(as.data.frame(Enemdu_emp_edad), aes(x=ingrl_clean,y=años_edu,color=as.factor(p02)))+
   geom_point()
 
+
+
 #############################################  -
+
+
+
+
+
+
+
+
+
+
+  
+
 #############################################
 
 #Carga de data de 2019
+
+
 Enemdu2019p <- read.csv("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\educacion\\Base_Match_dic18_dic19.csv",sep=";")
 
 Enemdu2019p$ingrl_clean <- ifelse(Enemdu2019p$ingrl_dic19 %in% c(999999) 
