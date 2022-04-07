@@ -1,75 +1,173 @@
 ---
 output:
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 author:"Luis Reyes y George Jaramillo" date:"`r Sys.Date()`"
 ---
 ```{r data, include=FALSE}
-
+if(!require(readstata13)) install.packages("readstata13", repos = "http://cran.us.r-project.org")
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(scales)) install.packages("scales", repos = "http://cran.us.r-project.org")
+if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
+if(!require(car)) install.packages("car", repos = "http://cran.us.r-project.org")
+if(!require(boot)) install.packages("boot", repos = "http://cran.us.r-project.org")
+if(!require(QuantPsyc)) install.packages("QuantPsyc", repos = "http://cran.us.r-project.org")
+if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 library(haven)
 library(tidyverse)
 library(readr)
 library(readxl)
 options(digits=2)
 #Carga de data 2021(local)
-Enemdu2021p <- as.data.frame(read_sav("D:\\carpeta de luis\\documentos  maquina de luis andres\\pasantias\\enemdu2021\\BDDenemdu_personas_2021_anual.sav"))
-
 ###################################
 
-#Carga de data automatizada 2021
+
 id <- "1ec12gRLmg6xemcb5h-Xpgc2PEzsvHKJe"
 url <- paste("https://drive.google.com/uc?export=download&id=", id, sep = "")
-
 # creates a temporary directory
 td <- tempdir()
 # creates a placeholder file
 tf <- tempfile(tmpdir = td, fileext = ".zip")
 # downloads the data into the placeholder file
-download.file(url = url, destfile = tf)
+download.file(url = url, destfile = tf,mode="wb")
 # extracts the files into the temporary directory
 unzip(tf, exdir = td, overwrite = TRUE)
 # file path containing the datasets
-fp <- file.path(td, list.files(path = td)[1])
+fp <- file.path(td, list.files(path = td)[2])
+library(foreign)
+Enemdu2021p <- read.spss(fp) 
+Enemdu2021p <- as.data.frame(Enemdu2021p)
 
-#library(foreign)
-# spss
-data <- read.spss(fp)
-Enemdu2021p <- as.data.frame(data)
 
 ###################################
-
-#Cantidad de personas con estudios de 4to nivel y un empleo pleno
-cuarto_niv_empleo <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% count(p10a)
-#variable usada en articulo
-varcuarto_niv_empleo <- cuarto_niv_empleo$n
-
-#Cantidad de personas con estudios de 3er nivel y un empleo pleno
-tercer_niv_empleo <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% count(p10a)
-#variable usada en articulo
-vartercer_niv_empleo <- tercer_niv_empleo$n
-
-#Procesamiento de data
-
+# PROCESAMIENTO DE DATA 
+#####################################################################33
 #Se elimina valores atipicos en ingresos y se crea una nueva columna
-Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999) 
-                               | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
+#<<<<<<< HEAD
+Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999, "Gasta mas de lo que gana","No informa") 
+                                  | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
+Enemdu2021p <- Enemdu2021p %>% filter(ingrl_clean < 7000)
 
-#Promedio de ingresos de personas entre (25-35) con estudios de 4to nivel y un empleo pleno
-ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a==10) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+                                 
+#>>>>>>> 06889dc1527f2f36b077cb10c38aacbe69776eab
+
+#Se crea nueva columna para los años de educacion
+#<<<<<<< HEAD
+
+Enemdu2021p <- Enemdu2021p %>% mutate(educ_anio = case_when(p10a == "Ninguno" ~ 0, #ninguno
+                                                            p10a == "Centro de alfabetización" & between(p10b, 0, 3) ~ 2 * p10b, #centro de alfabetizacion 
+                                                            p10a == "Centro de alfabetización" & between(p10b, 4, 10) ~ 3 + p10b, #centro de alfabetizacion
+                                                            p10a == "Jardín de Infantes" ~ 1, #jardín de infantes
+                                                            p10a == "Primaria" ~ 1 + p10b, #primaria
+                                                            p10a == "Educación Básica" ~ p10b, #educacion basica
+                                                            p10a == "Secundaria" ~ 7 + p10b, #secundaria
+                                                            p10a == "Educación  Media" ~ 10 + p10b, #educacion media
+                                                            p10a == "Superior no universitario" ~ 13 + p10b, #superior no universitario
+                                                            p10a == "Superior Universitario" ~ 13 + p10b, #superior universitario
+                                                            p10a == "Post-grado" ~ 18 + p10b, #postgrado
+                                                            TRUE ~ NA_real_))
+
+Enemdu2021p %>% select(p10a, p10b, educ_anio) %>% view()
+
+
+############################################################################################
+
+
+#Eliminacion de outliers de ingresos a partir del z-score
+
+Enemdu_zscore <- Enemdu2021p %>%
+  mutate(z_scores=(abs (ingrl_clean-mean (ingrl_clean,na.rm = TRUE)) / sd (ingrl_clean,na.rm = TRUE)))
+Enemdu_ingr_no_out <- Enemdu_zscore %>%
+  filter(z_scores<3)
+
+####################################################################################3
+#FILTRO DATA
+
+Enemdu2021p %>% filter(p02 == "Hombre") %>% filter(between(p03, 25,30)) %>% 
+  group_by(condact) %>% summarize(n = n()) %>% mutate(prob = prop.table(n))
+Enemdu_empleo2021 <- Enemdu_ingr_no_out %>% filter(condact == "Adecuado")
+
+Enemdu_empleo2021 %>% count(ingrl_clean)
+
+Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 25,30))
+
+Enemdu_tit_filt <- Enemdu_emp_edad %>% filter(p10a %in% c("Superior no universitario","Superior Universitario","Post-grado")) %>% filter(between(ingrl_clean,0,7000))
+
+Enemdu_tit_filt %>% count(p10a)
+
+###########################################################################################3
+
+
+#Porcentaje personas con titulo tercer nivel
+
+porcentage <- Enemdu_emp_edad %>% group_by(p10a) %>% count() %>% ungroup() %>% mutate(percentage=`n`/sum(`n`)*100)
+
+#Porcentaje personas no tienen bachiller, titutlo universitario ni maestria o PHD
+porc_dividido<- 100- (porcentage$percentage[5]+porcentage$percentage[8]+porcentage$percentage[9])
+
+
+#Cantidad de personas con estudios de 4to nivel y un empleo pleno ç(30-35 años)
+cuarto_niv_empleo <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado")%>% filter(between(as.numeric(p03),  25,30)) %>% count(p10a)
+
+den <- Enemdu2021p %>% filter(p10a=="Post-grado")%>% filter(between(as.numeric(p03),  25,30)) %>% count(p10a)
+
+#variable usada en articulo
+var_porc_cuarto_niv_empleo <- ((cuarto_niv_empleo$n)/(den$n))*100
+
+
+#Cantidad de personas con estudios de 3er nivel y un empleo pleno (30-35 años)
+tercer_niv_empleo <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado")%>% filter(between(as.numeric(p03),  25,30)) %>% count(p10a)
+
+den2 <- Enemdu2021p %>% filter(p10a=="Superior Universitario")%>% filter(between(as.numeric(p03),  25,30)) %>% count(p10a)
+#variable usada en articulo   
+var_porc_tercer_niv_empleo <- ((tercer_niv_empleo$n)/(den2$n))*100
+
+
+#Promedio de ingresos de personas entre (30-35) con estudios de 4to nivel y un empleo pleno
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03),  25,30))
 #variable usada en articulo
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
-#Promedio de ingresos de personas entre (25-35) con estudios de 3er nivel y un empleo pleno
-ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a==9) %>% filter(condact==1) %>% filter(between(p03, 25,35))
+#Promedio de ingresos de personas entre (30-35) con estudios de 3er nivel y un empleo pleno
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 25,30))
 #variable usada en articulo
 varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 
 
 primer_val <- ifelse(varingreso_prom_cuarto>varingreso_prom_tercer, "de estudio", "de experiencia")
 segun_val <- ifelse(varingreso_prom_cuarto>varingreso_prom_tercer, "experiencia", "conocimientos")
+ter_val<-ifelse(varingreso_prom_cuarto>varingreso_prom_tercer, "a trabajar", "continuar con sus estudios")
+
+
+
+
+
+#Gráfico porcentaje de personas que que tienen estudio
+ggplot(porcentage, aes(x="", y=percentage, fill=p10a))+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = paste0(round(percentage,1),"%")), 
+            position = position_stack(vjust = 0.5),size=4) +
+  coord_polar(theta = "y") + 
+    theme_void()
+
+
+#Grafico porcentaje de nivel de empleo por provincia
+porcentage2 <- Enemdu_emp_edad %>% group_by(dominio) %>% count() %>% ungroup() %>% mutate(percentage=`n`/sum(`n`)*100)
+porcentage2
+ggplot(porcentage2, aes(x="", y=percentage, fill=dominio))+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = paste0(round(percentage,1),"%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") + 
+    theme_void()
+
 ```
 # Después de la Universidad, ¿Seguir estudiando o adquirir experiencia?
 ### El salario en Ecuador ha sido cuestionado durante años, sobre todo por los mas jóvenes, quienes al momento de culminar una carrera universitaria se encuentran indecisos al tomar la decision de adquirir experiencia laboral o mantenerse estudiando despues de obtener un título de grado. La cuestión es, ¿Qué perfil es mas buscado por el empleador?. Es muy común observar ofertas laborales que requieren personal de 25 a 35 años con un alto nivel de estudio con experiencia minima de 3 a 5 años o más.Lo cual se complica para los jovenes quienes no pueden adquirir un empleo dado que no tienen experiencia por dedicarse a estudiar o a su vez no han podido adquirir un nivel mas de estudio por encontrar un trabajo fuera de su especialización para subsitir.
-### Pues bien, según la encuesta realizada por el Instituto Nacional de Estadisticas y Censo (INEC) en el último trimestre del 2021, existe un total de `r varcuarto_niv_empleo` de personas que tienen un estudio de 4to nivel y cuentan con empleo pleno mientras que, `r vartercer_niv_empleo` personas culminaron la carrera universitaria y se dedicaron a trabajar. 
-### Sin embargo, la conyontura se da en quienes obtienen un mejor salario.Dentro de un rango de edad de 25 a 35 años, las personas que cuentan con estudios superiores a una licenciatura (maestría o PhD) cuentan con un ingreso salarial aproximadamente de $`r varingreso_prom_cuarto` y por otro lado, quienes se dedicaron a adquierir experiencia laboral demuestran remuneraciones de $`r varingreso_prom_tercer` en promedio.Esto explicaría que las empresas tienen una mayor valoracion en lo que respecta a los años `r primer_val` mientras que el tiempo invertido en adquirir `r segun_val` parece 
+### Pues bien, según la encuesta realizada por el Instituto Nacional de Estadisticas y Censo (INEC) en el último trimestre del 2021, el nivel de educación esta dado por el siguiente gràfico:
+### ![](https://drive.google.com/file/d/1eK9TP6ri8TWfYxEAikWVo_qRH8vM2QFH/view?usp=sharing).
+### En donde el `r porcentage$percentage[8]`% cuentan con estudios en universidad, el `r porcentage$percentage[9]`% con estudios de postgrado, `r porcentage$percentage[5]`% culminaron el bachiller; y el `r porc_dividido`% se encuentra dividido entre personas que no tienen ningún estudio, asisten a un centro de alfabetización, culminaron primaria o llegaron a una eduación superior media, es decir que no culminaron el bachillerato. 
+### Las estadísticas demuestran que la mayoría de la poblacion cuenta con estudios destacados, reflejando en la tarifa de empleo que el `r var_porc_cuarto_niv_empleo`% de personas que tienen un estudio de 4to nivel cuentan con empleo pleno mientras que, el `r var_porc_tercer_niv_empleo`% de personas que culminaron la carrera universitaria y se dedicaron a trabajar cuentan con un empleo pleno. 
+### Con este resultado se esperaria que las personas que se han dedicado a `r ter_val` despues de obtener un titulo universitario obtengan una mejor remuneración, ya que cuentan con un mayor porcentaje de empleo pleno. Sin embargo, las personas que cuentan con estudios superiores a una licenciatura (maestría o PhD) cuentan con un ingreso salarial aproximadamente de $`r varingreso_prom_cuarto` y por otro lado, quienes se dedicaron a adquierir experiencia laboral demuestran remuneraciones de $`r varingreso_prom_tercer` en promedio.Esto explicaría que las empresas, en cuanto a lo económico, tienen una mayor valoracion sobre los años `r primer_val` mientras que el tiempo invertido en adquirir `r segun_val` parece no ser tomado como prioridad.

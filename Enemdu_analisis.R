@@ -66,8 +66,6 @@ den <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% count(p10a)
 var_porc_cuarto_niv_empleo <- ((cuarto_niv_empleo$n)/(den$n))*100
 
 
-
-
 #Cantidad de personas con estudios de 3er nivel y un empleo pleno
 tercer_niv_empleo <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% count(p10a)
 
@@ -102,9 +100,9 @@ c_sex <- Enemdu2021p  %>% count(p02)
 #<<<<<<< HEAD
 Enemdu2021p$ingrl_clean <- ifelse(Enemdu2021p$ingrl %in% c(999999, "Gasta mas de lo que gana","No informa") 
                                   | is.na(Enemdu2021p$ingrl), NA, Enemdu2021p$ingrl)
-#=======
-Enemdu2021p$ingrl_clean <- ifelse(as.numeric(Enemdu2021p$ingrl) > 5000
-                                  | is.na(Enemdu2021p$ingrl)|Enemdu2021p$ingrl=="No informa", NA, Enemdu2021p$ingrl)
+Enemdu2021p <- Enemdu2021p %>% filter(ingrl_clean < 7000)
+
+                                 
 #>>>>>>> 06889dc1527f2f36b077cb10c38aacbe69776eab
 
 #Se crea nueva columna para los años de educacion
@@ -125,27 +123,19 @@ Enemdu2021p <- Enemdu2021p %>% mutate(educ_anio = case_when(p10a == "Ninguno" ~ 
 
 Enemdu2021p %>% select(p10a, p10b, educ_anio) %>% view()
 
-
 Enemdu2021p %>% count(educ_anio)
 Enemdu2021p %>% filter(p10a=="Post-grado") %>%count(p10b)
 
 #=======
-#Enemdu2021p$años_edu <- if(Enemdu2021p$p10a==2 | Enemdu2021p$p10a==3){1} else {if(Enemdu2021p$p10a==4){7} else {if(Enemdu2021p$p10a==6 |Enemdu2021p$p10a==7){13} else{ if(Enemdu2021p$p10a==5){10} else {if(Enemdu2021p$p10a==8){16} else {if(Enemdu2021p$p10a==9){17} else {if(Enemdu2021p$p10a==10){19} else {0}}}}}}}
-Enemdu2021p$años_edu <- ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,0,3),2*Enemdu2021p$p10b , ifelse(Enemdu2021p$p10a=="Centro de alfabetización" | between(Enemdu2021p$p10b,4,10),3+Enemdu2021p$p10b, ifelse(Enemdu2021p$p10a=="Jardín de Infantes",1, ifelse(Enemdu2021p$p10a=="Primaria",1+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación Básica",Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Secundaria",7+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Educación  Media",10+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior no Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Superior Universitario",13+Enemdu2021p$p10b,ifelse(Enemdu2021p$p10a=="Post-grado",18+Enemdu2021p$p10b,0))))))))))
-Enemdu2021p$años_edu
-Enemdu2021p %>% count(años_edu)
-Enemdu2021p %>% filter(p10a=="Post-grado") %>%count(p10b)
-
-Enemdu2021p %>% filter(is.na(años_edu))
 
 #>>>>>>> 06889dc1527f2f36b077cb10c38aacbe69776eab
 #Promedio de ingresos de personas entre (30-35) con estudios de 4to nivel y un empleo pleno
-ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 30,35))
+ingreso_prom_cuarto <- Enemdu2021p %>% filter(p10a=="Post-grado") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03),  25,30))
 #variable usada en articulo
 varingreso_prom_cuarto <- mean(ingreso_prom_cuarto$ingrl_clean)
 
 #Promedio de ingresos de personas entre (30-35) con estudios de 3er nivel y un empleo pleno
-ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 30,35))
+ingreso_prom_tercer <- Enemdu2021p %>% filter(p10a=="Superior Universitario") %>% filter(condact=="Adecuado") %>% filter(between(as.numeric(p03), 25,30))
 #variable usada en articulo
 varingreso_prom_tercer <- mean(ingreso_prom_tercer$ingrl_clean)
 
@@ -197,7 +187,7 @@ summary(modelo4)
 ggplot(Enemdu_ingr_no_out, aes(x=ingrl_clean,y=as.numeric(p45)))+
   geom_point()
 
-Enemdu2021p %>% filter(p02 == "Hombre") %>% filter(between(p03, 30,35)) %>% 
+Enemdu2021p %>% filter(p02 == "Hombre") %>% filter(between(p03, 25,30)) %>% 
   group_by(condact) %>% summarize(n = n()) %>% mutate(prob = prop.table(n))
 Enemdu_empleo2021 <- Enemdu_ingr_no_out %>% filter(condact == "Adecuado")
 
@@ -211,20 +201,25 @@ summary(modelo5)
 ggplot(Enemdu_empleo2021, aes(x=p10a))+
   geom_bar()
 
+
 #Modelo de regresion lineal simple 6
 #Relacion entre ingresos y experiencia laboral
 modelo6 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu_empleo2021 ,na.action = na.exclude)
 summary(modelo6)
 ggplot(Enemdu_empleo2021, aes(x=ingrl_clean,y=as.numeric(p45)))+
-  geom_point()
+  geom_col()
+
 
 
 #Personas con empleo adecuado y edad para trabajar
-Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 30,35))
+Enemdu_emp_edad <- Enemdu_empleo2021 %>% filter(between(p03, 25,30))
 
 
 ggplot(Enemdu_emp_edad,aes(x=dominio))+
   geom_bar()
+ggplot(Enemdu_emp_edad,aes(x=p10a))+
+  geom_bar()
+
 
 #Modelo de regresion lineal simple 7
 #Relacion entre ingresos y educacion
@@ -242,7 +237,7 @@ summary(modelo8)
 ggplot(as.data.frame(Enemdu_emp_edad), aes(x=ingrl_clean,y=as.numeric(p45),color=as.factor(p02)))+
   geom_point()
 
-Enemdu_tit_filt <- Enemdu_emp_edad %>% filter(p10a %in% c("Superior no universitario","Superior Universitario","Post-grado"))  
+Enemdu_tit_filt <- Enemdu_emp_edad %>% filter(p10a %in% c("Superior no universitario","Superior Universitario","Post-grado")) %>% filter(between(ingrl_clean,0,7000))
 
 Enemdu_tit_filt %>% count(p10a)
 #Modelo de regresion lineal simple 9
@@ -254,12 +249,36 @@ summary(modelo9)
 ggplot(Enemdu_emp_edad, aes(x=ingrl_clean,y=educ_anio))+
   geom_point()
 
+
 #Modelo de regresion lineal simple 10
 #Relacion entre ingresos y experiencia laboral
 modelo10 <- lm(ingrl_clean ~ as.numeric(p45), data=Enemdu_tit_filt ,na.action = na.exclude)
 summary(modelo10)
 ggplot(as.data.frame(Enemdu_emp_edad), aes(x=ingrl_clean,y=as.numeric(p45),color=as.factor(p02)))+
   geom_point()
+
+
+
+#Gráfico porcentaje de personas que que tienen estudio
+porcentage <- Enemdu_emp_edad %>% group_by(p10a) %>% count() %>% ungroup() %>% mutate(percentage=`n`/sum(`n`)*100)
+ggplot(porcentage, aes(x="", y=percentage, fill=p10a))+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = paste0(round(percentage,1),"%")), 
+            position = position_stack(vjust = 0.5),size=4) +
+  coord_polar(theta = "y") + 
+  theme_void()
+
+
+
+#Grafico porcentaje de nivel de empleo por provincia
+porcentage2 <- Enemdu_emp_edad %>% group_by(dominio) %>% count() %>% ungroup() %>% mutate(percentage=`n`/sum(`n`)*100)
+porcentage2
+ggplot(porcentage2, aes(x="", y=percentage, fill=dominio))+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = paste0(round(percentage,1),"%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") + 
+  theme_void()
 
 
 #####HOMBRES
@@ -398,14 +417,5 @@ modelo16 <- lm(ingrl_clean ~ p45_dic19, data=Enemdu_emp_edad19 ,na.action = na.e
 summary(modelo16)
 ggplot(Enemdu_emp_edad19, aes(x=ingrl_clean,y=p45_dic19))+
   geom_point()
-
-
-
-
-
-
-
-
-
 
 
