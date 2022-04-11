@@ -152,6 +152,38 @@ ggplot(porcentage2, aes(x="", y=percentage, fill=dominio))+
   theme_void()
 
 
+#GRAFICOS DE DISPERSION CON LINEA DE TENDENCIA(Cual serian los mejores para el articulo)
+
+#EDUCACION CON INGRESOS
+
+ggplot(Enemdu_emp_edad, aes(x=educ_anio,y=log_ing,color=p02))+
+  geom_point()
+
+ggplot(Enemdu_emp_edad, aes(x=educ_anio,y=log_ing,fill=p02))+
+  geom_point()+
+  geom_smooth()
+
+ggplot(Enemdu_emp_edad, aes(x=educ_anio,y=log_ing,color=p02))+
+  geom_smooth()
+
+ggplot(Enemdu_emp_edad, aes(x=educ_anio,y=log_ing,color=p02))+
+  geom_smooth(method = "lm", se = FALSE)
+
+
+#EXPERIENCIA CON INGRESOS
+
+ggplot(Enemdu_emp_edad, aes(x=expe,y=log_ing,color=p02))+
+  geom_point()
+
+ggplot(Enemdu_emp_edad, aes(x=expe,y=log_ing,fill=p02))+
+  geom_point()+
+  geom_smooth()
+
+ggplot(Enemdu_emp_edad, aes(x=expe,y=log_ing,color=p02))+
+  geom_smooth()
+
+ggplot(Enemdu_emp_edad, aes(x=expe,y=ingrl_clean,color=p02))+
+  geom_smooth(method = "lm", se = FALSE)
 ###############################################################
 ####                        Modelos                        ####
 ###############################################################
@@ -179,6 +211,7 @@ summary(modelo_multiple3)
 modelo_multiple4 <- lm(ingrl_clean ~ educ_anio + expe + expe2 + sex_dummy, data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo_multiple4)
 
+#MODELO FINAL A USAR. YA QUE AL USAR LOGARITMO, LOS COEFICIENTES SON PORCENTAJES
 #MODELO CON LOGARITMO DE INGRESOS(log(ingresos)=b0+b1(años_educacion)+b2(experiencia)+b3(experiencia al cuadrado)+b4(Sexo(hombres==1)))
 modelo_multiple5 <- lm(log_ing ~ educ_anio + expe + expe2 + sex_dummy, data=Enemdu_emp_edad ,na.action = na.exclude)
 summary(modelo_multiple5)
